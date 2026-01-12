@@ -1,6 +1,7 @@
 package facebook
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -29,18 +30,27 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	
+	// 调试：检查HTML
+	fmt.Printf("[DEBUG Facebook] HTML length: %d\n", len(html))
+	if len(html) < 1000 {
+		fmt.Printf("[DEBUG Facebook] HTML content (first 500 chars):\n%s\n", html[:min(500, len(html))])
+	}
+	
 	titles := utils.MatchOneOf(html, `<title>([^<]+)</title>`)
 	if titles == nil || len(titles) < 2 {
+		fmt.Println("[DEBUG Facebook] No title found")
 		return nil, errors.WithStack(extractors.ErrURLParseFailed)
 	}
 
 	title := strings.TrimSpace(titles[1])
-
 	title = regexp.MustCompile(`\n+`).ReplaceAllString(title, " ")
+	fmt.Printf("[DEBUG Facebook] Title: %s\n", title)
 
+	// 尝试多种视频URL模式
 	qualityRegMap := map[string]*regexp.Regexp{
-		"sd": regexp.MustCompile(`"playable_url":\s*"([^"]+)"`),
-		// "hd": regexp.MustCompile(`"playable_url_quality_hd":\s*"([^"]+)"`),
+		"sd": regexp.MustCompile(`"(?:playable_url|sd_src|src)":\s*"([^"]+)"`),
+		"hd": regexp.MustCompile(`"(?:hd_src|hd_quality_url)":\s*"([^"]+)"`),
 	}
 
 	streams := make(map[string]*extractors.Stream, 2)
@@ -48,14 +58,17 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 		matcher := qualityReg.FindStringSubmatch(html)
 
 		if len(matcher) == 0 {
+			fmt.Printf("[DEBUG Facebook] No match for quality: %s\n", quality)
 			continue
 		}
 
+		fmt.Printf("[DEBUG Facebook] Found %s quality URL\n", quality)
 		u := strings.ReplaceAll(matcher[1], "\\", "")
 
 		size, err := request.Size(u, url)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			fmt.Printf("[DEBUG Facebook] Error getting size: %v\n", err)
+			continue
 		}
 
 		urlData := &extractors.Part{
@@ -69,6 +82,8 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 			Quality: quality,
 		}
 	}
+	
+	fmt.Printf("[DEBUG Facebook] Total streams found: %d\n", len(streams))
 
 	return []*extractors.Data{
 		{
@@ -79,4 +94,11 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 			URL:     url,
 		},
 	}, nil
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

@@ -60,14 +60,14 @@ func Request(method, url string, body io.Reader, headers map[string]string) (*ht
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 	}
 	var client *http.Client
+	// 原来的创建逻辑
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
     if useTestClient && testHTTPClient != nil {
         client = testHTTPClient  // 使用测试客户端
     } else {
-        // 原来的创建逻辑
-        jar, err := cookiejar.New(nil)
-        if err != nil {
-            return nil, errors.WithStack(err)
-        }
         client = &http.Client{
             Transport: transport,
             Timeout:   15 * time.Minute,

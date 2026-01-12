@@ -74,14 +74,6 @@ func Request(method, url string, body io.Reader, headers map[string]string) (*ht
             Jar:       jar,
         }
     }
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   15 * time.Minute,
-		Jar:       jar,
-	}
 
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {

@@ -16,6 +16,13 @@ func TestDownload(t *testing.T) {
 
 	httpmock.ActivateNonDefault(http.DefaultClient)
 
+	// 创建测试客户端
+    testClient := &http.Client{}
+    httpmock.ActivateNonDefault(testClient)
+	// 设置 request 包使用测试客户端
+    request.SetTestClient(testClient)
+    defer request.ResetTestClient()  // 测试后清理
+
 	// 2. 测试数据
 	tests := []struct {
 		name string
@@ -32,19 +39,15 @@ func TestDownload(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// 3. 为当前测试注册模拟响应
-			setupMockResponses(tt.args.URL)
-			
-			// 4. 执行测试
-			data, err := New().Extract(tt.args.URL, extractors.Options{})
-			test.CheckError(t, err)
-			test.Check(t, tt.args, data[0])
-		})
-		
-		// 5. 重置模拟，避免测试间干扰
-		httpmock.Reset()
-	}
+        t.Run(tt.name, func(t *testing.T) {
+            httpmock.Reset()
+            setupMockResponses(tt.args.URL)
+            
+            data, err := New().Extract(tt.args.URL, extractors.Options{})
+            test.CheckError(t, err)
+            test.Check(t, tt.args, data[0])
+        })
+    }
 }
 
 // setupMockResponses 设置所有需要的模拟响应

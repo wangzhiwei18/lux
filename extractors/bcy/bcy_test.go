@@ -14,6 +14,8 @@ func TestDownload(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
+	httpmock.ActivateNonDefault(http.DefaultClient)
+
 	// 2. 测试数据
 	tests := []struct {
 		name string

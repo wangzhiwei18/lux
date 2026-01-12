@@ -26,6 +26,10 @@ var (
 	userAgent  string
 	refer      string
 	debug      bool
+
+	// 添加：测试专用的客户端
+    testHTTPClient *http.Client
+    useTestClient  bool
 )
 
 // Options defines common request options.
@@ -55,7 +59,21 @@ func Request(method, url string, body io.Reader, headers map[string]string) (*ht
 		TLSHandshakeTimeout: 10 * time.Second,
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 	}
-	jar, err := cookiejar.New(nil)
+	var client *http.Client
+    if useTestClient && testHTTPClient != nil {
+        client = testHTTPClient  // 使用测试客户端
+    } else {
+        // 原来的创建逻辑
+        jar, err := cookiejar.New(nil)
+        if err != nil {
+            return nil, errors.WithStack(err)
+        }
+        client = &http.Client{
+            Transport: transport,
+            Timeout:   15 * time.Minute,
+            Jar:       jar,
+        }
+    }
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -215,4 +233,17 @@ func ContentType(url, refer string) (string, error) {
 	s := h.Get("Content-Type")
 	// handle Content-Type like this: "text/html; charset=utf-8"
 	return strings.Split(s, ";")[0], nil
+}
+
+// 添加测试辅助函数：
+// SetTestClient 设置测试用的 HTTP 客户端
+func SetTestClient(c *http.Client) {
+    testHTTPClient = c
+    useTestClient = true
+}
+
+// ResetTestClient 重置为正常客户端
+func ResetTestClient() {
+    testHTTPClient = nil
+    useTestClient = false
 }

@@ -29,3 +29,4 @@ jobs:
 
       - name: Test
         run: go test -timeout 5m -race -coverpkg=./... -coverprofile=coverage.txt github.com/iawia002/lux/extractors/facebook
+

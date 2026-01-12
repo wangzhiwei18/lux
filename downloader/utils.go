@@ -38,6 +38,12 @@ func printHeader(data *extractors.Data) {
 }
 
 func printStream(stream *extractors.Stream) {
+	// 添加 nil 检查
+    if stream == nil {
+        fmt.Println("Error: stream is nil")
+        return
+    }
+	
 	blue.Println(fmt.Sprintf("     [%s]  -------------------", stream.ID)) // nolint
 	if stream.Quality != "" {
 		cyan.Printf("     Quality:         ") // nolint

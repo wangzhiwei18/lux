@@ -1,6 +1,7 @@
 package bcy
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/jarcoal/httpmock"

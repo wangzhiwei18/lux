@@ -44,6 +44,7 @@ func printStream(stream *extractors.Stream) {
         return
     }
 	
+	
 	blue.Println(fmt.Sprintf("     [%s]  -------------------", stream.ID)) // nolint
 	if stream.Quality != "" {
 		cyan.Printf("     Quality:         ") // nolint
